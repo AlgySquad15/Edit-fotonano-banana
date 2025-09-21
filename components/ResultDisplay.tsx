@@ -1,15 +1,27 @@
-
 import React from 'react';
 import { EditResult } from '../services/geminiService';
-import { ImageIcon, SparklesIcon } from './icons';
+import { ImageIcon, SparklesIcon, CycleIcon, DownloadIcon } from './icons';
 
 interface ResultDisplayProps {
   isLoading: boolean;
   error: string | null;
   result: EditResult | null;
+  onContinueEditing: (result: EditResult) => void;
 }
 
-export const ResultDisplay: React.FC<ResultDisplayProps> = ({ isLoading, error, result }) => {
+export const ResultDisplay: React.FC<ResultDisplayProps> = ({ isLoading, error, result, onContinueEditing }) => {
+  
+  const handleSave = () => {
+    if (!result?.imageUrl) return;
+
+    const link = document.createElement('a');
+    link.href = result.imageUrl;
+    link.download = `ai-edited-${Date.now()}.png`; 
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -41,6 +53,22 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ isLoading, error, 
                      <p className="text-brand-slate-300 italic">{result.text}</p>
                  </div>
             )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                    onClick={() => onContinueEditing(result)}
+                    className="w-full bg-brand-slate-700 hover:bg-brand-slate-600 text-brand-slate-100 font-bold py-3 px-4 rounded-lg transition-all duration-300 text-lg flex items-center justify-center gap-2"
+                >
+                    <CycleIcon className="w-5 h-5" />
+                    Continue Editing
+                </button>
+                <button
+                    onClick={handleSave}
+                    className="w-full bg-brand-cyan hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 text-lg flex items-center justify-center gap-2"
+                >
+                    <DownloadIcon className="w-5 h-5" />
+                    Save Result
+                </button>
+            </div>
         </div>
       );
     }
@@ -53,5 +81,5 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ isLoading, error, 
     );
   };
 
-  return <div className="w-full aspect-video flex flex-col">{renderContent()}</div>;
+  return <div className="w-full flex flex-col">{renderContent()}</div>;
 };

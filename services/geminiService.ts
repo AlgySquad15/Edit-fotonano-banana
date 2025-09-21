@@ -43,7 +43,11 @@ export const editImageWithNanoBanana = async (
     });
 
     if (!response.candidates || response.candidates.length === 0) {
-      throw new Error("No candidates returned from the API.");
+      let errorMessage = "The model did not return any content. This can happen due to safety filters or an unclear request. Please try a different image or prompt.";
+      if (response.promptFeedback?.blockReason) {
+        errorMessage = `Your request was blocked. Reason: ${response.promptFeedback.blockReason}. This often happens due to safety policies. Please try a different image or a more general prompt.`;
+      }
+      throw new Error(errorMessage);
     }
 
     const result: EditResult = {
@@ -62,7 +66,7 @@ export const editImageWithNanoBanana = async (
     }
 
     if (!result.imageUrl) {
-        throw new Error("API did not return an image. It might have refused the request.");
+        throw new Error("The AI returned a response, but it did not contain an image. Please try rephrasing your prompt.");
     }
 
     return result;

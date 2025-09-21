@@ -5,7 +5,7 @@ import { ImageUploader } from './components/ImageUploader';
 import { PromptInput } from './components/PromptInput';
 import { ResultDisplay } from './components/ResultDisplay';
 import { EditResult, editImageWithNanoBanana } from './services/geminiService';
-import { fileToBase64 } from './utils/fileUtils';
+import { fileToBase64, dataUrlToFile } from './utils/fileUtils';
 
 function App() {
   const [originalImage, setOriginalImage] = useState<File | null>(null);
@@ -46,6 +46,27 @@ function App() {
       setIsLoading(false);
     }
   }, [originalImage, prompt]);
+  
+  const handleContinueEditing = useCallback(async (result: EditResult) => {
+    if (!result.imageUrl) return;
+    
+    // Create a unique filename for the new image file
+    const newFileName = `edited_image_${Date.now()}.png`; 
+    const newImageFile = await dataUrlToFile(result.imageUrl, newFileName);
+    
+    // Set the new image as the uploader's source
+    handleImageUpload(newImageFile);
+    
+    // Clear the prompt and the result display for the next edit
+    setPrompt('');
+    setEditResult(null);
+    setError(null);
+    
+    // Optional: scroll to the top or focus the prompt input for better UX
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-brand-slate-950 text-brand-slate-200 font-sans">
@@ -71,7 +92,7 @@ function App() {
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -87,7 +108,8 @@ function App() {
             <ResultDisplay 
               isLoading={isLoading} 
               error={error} 
-              result={editResult} 
+              result={editResult}
+              onContinueEditing={handleContinueEditing}
             />
           </div>
         </div>
